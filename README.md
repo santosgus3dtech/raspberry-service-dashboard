@@ -2,6 +2,8 @@
 
 FastAPI dashboard for monitoring services on a Raspberry Pi. It shows uptime, memory, disk, temperature, service states, health check latency, tunnel URL, logs, and controlled restart actions.
 
+![Dashboard preview](docs/images/dashboard-preview.svg)
+
 This repo was extracted from a real Raspberry deployment used to keep a production automation visible and recoverable from a small web UI.
 
 ## Features
@@ -52,4 +54,4 @@ sudo systemctl enable --now raspberry-service-dashboard
 
 ## Portfolio
 
-This is a useful standalone project because it shows operational tooling: Linux/systemd integration, safe service actions, log redaction, health checks, and a web interface for a headless device.
+This is a useful standalone project because it shows operational tooling: Linux/systemd integration, safe service actions, log redaction, health checks, tests, CI, and a web interface for a headless device.
