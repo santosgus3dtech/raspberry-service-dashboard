@@ -31,6 +31,7 @@ HOST_PROC = os.getenv("HOST_PROC", "/proc")
 HOST_SYS = os.getenv("HOST_SYS", "/sys")
 HOST_ROOT = os.getenv("HOST_ROOT", "/")
 DEMO_MODE = env_flag("DEMO_MODE")
+DASHBOARD_SERVICE_NAME = os.getenv("DASHBOARD_SERVICE_NAME", "raspberry-status")
 
 
 @dataclass(frozen=True)

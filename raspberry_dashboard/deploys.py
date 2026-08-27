@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import shlex
 import time
 from pathlib import Path
 from typing import Any
@@ -8,7 +9,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from .command import run
-from .config import DEPLOY_ACTIONS_ENABLED, DeployTarget, deploy_targets
+from .config import DASHBOARD_SERVICE_NAME, DEPLOY_ACTIONS_ENABLED, DeployTarget, deploy_targets
 from .redaction import redact
 
 
@@ -57,22 +58,41 @@ def run_deploy(name: str) -> dict[str, Any]:
         result = subprocess.CompletedProcess(command, 124, exc.stdout or "", exc.stderr or str(exc))
 
     restart_result = None
+    restart_scheduled = False
     if result.returncode == 0 and target.service:
-        restart_result = run(["sudo", "-n", "systemctl", "restart", target.service], timeout=20)
+        if target.service == DASHBOARD_SERVICE_NAME:
+            subprocess.Popen(
+                [
+                    "sudo",
+                    "-n",
+                    "sh",
+                    "-c",
+                    f"sleep 1; systemctl restart {shlex.quote(target.service)}",
+                ],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            restart_scheduled = True
+        else:
+            restart_result = run(["sudo", "-n", "systemctl", "restart", target.service], timeout=20)
 
     elapsed_ms = round((time.perf_counter() - started) * 1000)
     return {
         "name": target.name,
-        "ok": result.returncode == 0 and (restart_result is None or restart_result.returncode == 0),
+        "ok": result.returncode == 0
+        and (restart_scheduled or restart_result is None or restart_result.returncode == 0),
         "elapsed_ms": elapsed_ms,
         "command": target.command_display,
         "return_code": result.returncode,
         "output": redact((result.stdout or result.stderr or "").strip())[-4000:],
-        "restart": None
-        if restart_result is None
-        else {
+        "restart": {
             "service": target.service,
-            "return_code": restart_result.returncode,
-            "output": redact((restart_result.stdout or restart_result.stderr or "").strip())[-1000:],
-        },
+            "scheduled": restart_scheduled,
+            "return_code": None if restart_scheduled or restart_result is None else restart_result.returncode,
+            "output": ""
+            if restart_scheduled or restart_result is None
+            else redact((restart_result.stdout or restart_result.stderr or "").strip())[-1000:],
+        }
+        if target.service
+        else None,
     }

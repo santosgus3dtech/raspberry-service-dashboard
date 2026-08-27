@@ -98,6 +98,42 @@ def test_deploy_actions_disabled_by_default(monkeypatch, tmp_path):
     assert response.status_code == 403
 
 
+def test_self_deploy_schedules_delayed_restart(monkeypatch, tmp_path):
+    popen_calls = []
+
+    def fake_run(command, cwd=None, capture_output=True, text=True, timeout=120, check=False):
+        return subprocess.CompletedProcess(command, 0, "Already up to date.\n", "")
+
+    class FakePopen:
+        def __init__(self, command, stdout=None, stderr=None):
+            popen_calls.append(command)
+
+    monkeypatch.setattr(deploys, "DEPLOY_ACTIONS_ENABLED", True)
+    monkeypatch.setattr(deploys, "DASHBOARD_SERVICE_NAME", "raspberry-status")
+    monkeypatch.setattr(
+        deploys,
+        "deploy_targets",
+        lambda: [
+            deploys.DeployTarget(
+                name="dashboard",
+                path=str(tmp_path),
+                service="raspberry-status",
+                command=["git", "status", "--short"],
+            )
+        ],
+    )
+    monkeypatch.setattr(deploys.subprocess, "run", fake_run)
+    monkeypatch.setattr(deploys.subprocess, "Popen", FakePopen)
+    client = TestClient(dashboard_app.app)
+
+    response = client.post("/api/deploys/dashboard/run")
+
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+    assert response.json()["restart"]["scheduled"] is True
+    assert popen_calls
+
+
 def test_inventory_endpoint_is_public_safe():
     client = TestClient(dashboard_app.app)
 
