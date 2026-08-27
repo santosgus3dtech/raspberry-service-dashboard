@@ -5,7 +5,7 @@ import subprocess
 from fastapi.testclient import TestClient
 
 from raspberry_dashboard import app as dashboard_app
-from raspberry_dashboard import deploys, logs, services
+from raspberry_dashboard import deploys, jobs, logs, services
 
 
 def test_logs_reject_unknown_service():
@@ -143,3 +143,84 @@ def test_inventory_endpoint_is_public_safe():
     payload = response.json()
     assert "tools" in payload
     assert "monitored_services" in payload
+
+
+def create_jobs_db(path):
+    import sqlite3
+
+    connection = sqlite3.connect(path)
+    connection.executescript(
+        """
+        CREATE TABLE jobs (
+          id INTEGER PRIMARY KEY,
+          company TEXT,
+          title TEXT,
+          target_role TEXT,
+          location TEXT,
+          notes TEXT,
+          country TEXT,
+          status TEXT,
+          work_mode TEXT,
+          difficulty TEXT,
+          compatibility INTEGER,
+          priority TEXT,
+          resume_path TEXT,
+          resume_version TEXT,
+          apply_method TEXT,
+          applied_at TEXT,
+          updated_at TEXT
+        );
+        CREATE TABLE application_events (
+          id INTEGER PRIMARY KEY,
+          job_id INTEGER,
+          event_type TEXT,
+          status TEXT,
+          details TEXT
+        );
+        INSERT INTO jobs (
+          id, company, title, target_role, location, notes, country, status,
+          work_mode, difficulty, compatibility, updated_at
+        ) VALUES
+          (1, 'Avenue Code', 'Python Engineer', 'Backend', 'Brasil', '', 'Brasil', 'Enviada', 'Remoto', 'Facil', 88, CURRENT_TIMESTAMP),
+          (2, 'Decskill', 'Application Support', 'Suporte', 'Porto', '', 'Portugal', 'CV adaptado', 'Hibrido', 'Media', 82, CURRENT_TIMESTAMP);
+        """
+    )
+    connection.close()
+
+
+def test_jobs_dashboard_filters_and_updates(monkeypatch, tmp_path):
+    db_path = tmp_path / "candidaturas.db"
+    create_jobs_db(db_path)
+    monkeypatch.setattr(jobs, "JOBS_DB_PATH", db_path)
+    client = TestClient(dashboard_app.app)
+
+    listed = client.get("/vagas/api/jobs?country=Brasil&min_compatibility=80")
+    updated = client.patch(
+        "/vagas/api/jobs/2",
+        json={"status": "Enviada", "notes": "Enviada pelo painel"},
+    )
+    meta = client.get("/vagas/api/meta")
+
+    assert listed.status_code == 200
+    assert [item["company"] for item in listed.json()] == ["Avenue Code"]
+    assert updated.status_code == 200
+    assert updated.json()["status"] == "Enviada"
+    assert meta.json()["summary"]["sent"] == 2
+
+
+def test_jobs_dashboard_serves_spa(monkeypatch, tmp_path):
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<h1>Candidaturas</h1>", encoding="utf-8")
+    monkeypatch.setattr(jobs, "JOBS_DIST_DIR", dist)
+    client = TestClient(dashboard_app.app)
+
+    redirect = client.get("/vagas", follow_redirects=False)
+    page = client.get("/vagas/")
+    fallback = client.get("/vagas/qualquer-rota")
+
+    assert redirect.status_code == 307
+    assert redirect.headers["location"] == "/vagas/"
+    assert page.status_code == 200
+    assert "Candidaturas" in page.text
+    assert fallback.status_code == 200

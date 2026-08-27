@@ -3,14 +3,15 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from .config import DEMO_MODE, INSTAGRAM_HEALTH_URL
 from .demo import demo_inventory, demo_logs, demo_status
 from .deploys import list_deploys, run_deploy
 from .health import check_http_health, latest_tunnel_url
 from .inventory import collect_inventory
+from .jobs import dashboard_file, dashboard_meta, list_jobs, update_job
 from .logs import service_logs
 from .metrics import system_summary
 from .notifications import notification_config, send_test_notification
@@ -120,6 +121,36 @@ async def api_test_notification() -> dict[str, Any]:
     if DEMO_MODE:
         return {"ok": True, "status_code": 200}
     return send_test_notification()
+
+
+@app.get("/vagas/api/jobs")
+async def api_job_applications(request: Request) -> list[dict[str, Any]]:
+    return list_jobs(request.query_params)
+
+
+@app.get("/vagas/api/meta")
+async def api_job_application_meta() -> dict[str, Any]:
+    return dashboard_meta()
+
+
+@app.patch("/vagas/api/jobs/{job_id}")
+async def api_update_job_application(job_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+    return update_job(job_id, payload)
+
+
+@app.get("/vagas", response_class=RedirectResponse)
+async def job_applications_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/vagas/", status_code=307)
+
+
+@app.get("/vagas/", response_class=FileResponse)
+async def job_applications_dashboard() -> FileResponse:
+    return dashboard_file()
+
+
+@app.get("/vagas/{asset_path:path}", response_class=FileResponse)
+async def job_applications_asset(asset_path: str) -> FileResponse:
+    return dashboard_file(asset_path)
 
 
 @app.get("/", response_class=HTMLResponse)
