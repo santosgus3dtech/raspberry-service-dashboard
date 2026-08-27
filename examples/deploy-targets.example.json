@@ -1,0 +1,16 @@
+[
+  {
+    "name": "instagram-auto-dm",
+    "path": "/opt/instagram-stl-auto-dm",
+    "service": "instagram-stl-auto-dm",
+    "branch": "main",
+    "command": ["git", "pull", "--ff-only"]
+  },
+  {
+    "name": "dashboard",
+    "path": "/opt/raspberry-service-dashboard",
+    "service": "raspberry-service-dashboard",
+    "branch": "main",
+    "command": ["git", "pull", "--ff-only"]
+  }
+]

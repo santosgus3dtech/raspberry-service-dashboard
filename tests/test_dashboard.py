@@ -5,6 +5,7 @@ import subprocess
 from fastapi.testclient import TestClient
 
 from raspberry_dashboard import app as dashboard_app
+from raspberry_dashboard import deploys, logs, services
 
 
 def test_logs_reject_unknown_service():
@@ -45,7 +46,8 @@ def test_restart_uses_sudo_for_allowed_service(monkeypatch):
             return subprocess.CompletedProcess(command, 0, "line one\nline two\n", "")
         return subprocess.CompletedProcess(command, 0, "", "")
 
-    monkeypatch.setattr(dashboard_app, "_run", fake_run)
+    monkeypatch.setattr(services, "run", fake_run)
+    monkeypatch.setattr(logs, "run", fake_run)
     client = TestClient(dashboard_app.app)
 
     response = client.post("/api/services/instagram-stl-auto-dm/restart")
@@ -67,12 +69,41 @@ def test_service_logs_redacts_tokens(monkeypatch):
             "",
         )
 
-    monkeypatch.setattr(dashboard_app, "_run", fake_run)
+    monkeypatch.setattr(logs, "run", fake_run)
 
-    logs = dashboard_app._service_logs("instagram-stl-auto-dm")
+    payload = logs.service_logs("instagram-stl-auto-dm")
 
-    joined = "\n".join(logs["lines"])
+    joined = "\n".join(payload["lines"])
     assert "secret-token" not in joined
     assert "abc123" not in joined
     assert "hub.verify_token=<redacted>" in joined
 
+
+def test_deploy_actions_disabled_by_default(monkeypatch, tmp_path):
+    target_json = (
+        "[{"
+        f'"name":"demo","path":"{tmp_path.as_posix()}","service":"demo.service"'
+        "}]"
+    )
+    monkeypatch.setenv("DEPLOY_TARGETS_JSON", target_json)
+    monkeypatch.setattr(deploys, "DEPLOY_ACTIONS_ENABLED", False)
+    client = TestClient(dashboard_app.app)
+
+    listed = client.get("/api/deploys")
+    response = client.post("/api/deploys/demo/run")
+
+    assert listed.status_code == 200
+    assert listed.json()[0]["name"] == "demo"
+    assert listed.json()[0]["actions_enabled"] is False
+    assert response.status_code == 403
+
+
+def test_inventory_endpoint_is_public_safe():
+    client = TestClient(dashboard_app.app)
+
+    response = client.get("/api/inventory")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert "tools" in payload
+    assert "monitored_services" in payload

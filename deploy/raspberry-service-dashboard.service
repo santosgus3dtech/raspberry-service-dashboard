@@ -5,12 +5,15 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=codex
-Group=codex
+User=raspberry-dashboard
+Group=raspberry-dashboard
 WorkingDirectory=/opt/raspberry-service-dashboard
 Environment=MONITORED_SERVICES=instagram-stl-auto-dm,instagram-stl-auto-dm-tunnel
 Environment=RESTARTABLE_SERVICES=instagram-stl-auto-dm,instagram-stl-auto-dm-tunnel
 Environment=INSTAGRAM_HEALTH_URL=http://127.0.0.1:8000/health
+Environment=DEPLOY_ACTIONS_ENABLED=false
+Environment=NOTIFICATION_TEST_ENABLED=false
+EnvironmentFile=-/etc/raspberry-service-dashboard/dashboard.env
 ExecStart=/opt/raspberry-service-dashboard/.venv/bin/uvicorn raspberry_dashboard.app:app --host 0.0.0.0 --port 8080
 Restart=always
 RestartSec=5
