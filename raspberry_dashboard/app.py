@@ -14,6 +14,7 @@ from .inventory import collect_inventory
 from .jobs import dashboard_file, dashboard_meta, list_jobs, update_job
 from .logs import service_logs
 from .metrics import system_summary
+from .network import network_summary
 from .notifications import notification_config, send_test_notification
 from .services import monitored_service_names, restart_service, service_status
 from .ui import HTML
@@ -64,6 +65,13 @@ async def api_inventory() -> dict[str, Any]:
     if DEMO_MODE:
         return demo_inventory()
     return collect_inventory()
+
+
+@app.get("/api/network")
+def api_network() -> dict[str, Any]:
+    # FastAPI runs sync routes in its thread pool, keeping the two-second
+    # PiSentinel timeout away from the async API event loop.
+    return network_summary()
 
 
 @app.get("/api/logs/{service_name}")

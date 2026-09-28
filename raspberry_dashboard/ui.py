@@ -4,28 +4,29 @@ HTML = """<!doctype html>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Raspberry Control Center v2</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23fff7df'/%3E%3Cpath d='M31 17c1-8 8-11 16-9-1 7-6 12-14 12z' fill='%23178a4a'/%3E%3Cpath d='M29 17c-5-6-12-6-18-2 4 6 10 8 17 5z' fill='%230f5e38'/%3E%3Ccircle cx='22' cy='31' r='10' fill='%23c51f46'/%3E%3Ccircle cx='34' cy='31' r='10' fill='%23c51f46'/%3E%3Ccircle cx='28' cy='43' r='11' fill='%23c51f46'/%3E%3Ccircle cx='22' cy='31' r='4' fill='%23ec5b75'/%3E%3Ccircle cx='34' cy='31' r='4' fill='%23ec5b75'/%3E%3Ccircle cx='28' cy='43' r='4' fill='%23ec5b75'/%3E%3Cpath d='M16 31c0-10 7-17 16-17s16 7 16 17c0 13-8 23-20 23S16 44 16 31z' fill='none' stroke='%237b1130' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23151e2c'/%3E%3Cpath d='M31 17c1-8 8-11 16-9-1 7-6 12-14 12z' fill='%23178a4a'/%3E%3Cpath d='M29 17c-5-6-12-6-18-2 4 6 10 8 17 5z' fill='%230f5e38'/%3E%3Ccircle cx='22' cy='31' r='10' fill='%23c51f46'/%3E%3Ccircle cx='34' cy='31' r='10' fill='%23c51f46'/%3E%3Ccircle cx='28' cy='43' r='11' fill='%23c51f46'/%3E%3Ccircle cx='22' cy='31' r='4' fill='%23ec5b75'/%3E%3Ccircle cx='34' cy='31' r='4' fill='%23ec5b75'/%3E%3Ccircle cx='28' cy='43' r='4' fill='%23ec5b75'/%3E%3Cpath d='M16 31c0-10 7-17 16-17s16 7 16 17c0 13-8 23-20 23S16 44 16 31z' fill='none' stroke='%237b1130' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E">
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f7f8f3;
-      --ink: #1a1918;
-      --muted: #657166;
-      --panel: #fffdf8;
-      --panel-soft: #f0f5e8;
-      --line: #d9dfcf;
+      color-scheme: dark;
+      --bg: #0c121c;
+      --ink: #e7edf5;
+      --muted: #a8b6c8;
+      --panel: #151e2c;
+      --panel-soft: #1b2839;
+      --line: #34465b;
       --raspberry: #c51f46;
       --raspberry-dark: #7b1130;
-      --leaf: #178a4a;
+      --leaf: #147b48;
       --leaf-dark: #0f5e38;
-      --cream: #fff7df;
-      --terminal: #101511;
-      --terminal-line: #243527;
+      --cream: #e3ebf5;
+      --terminal: #0b1415;
+      --terminal-line: #314740;
       --terminal-text: #d7f7d5;
-      --ok: #16884f;
-      --warn: #b36b00;
-      --bad: #bf2641;
-      --shadow: 0 14px 36px rgba(61, 35, 30, 0.12);
+      --ok: #62dc9c;
+      --warn: #f0bb62;
+      --bad: #ff8297;
+      --focus: #9cc6ff;
+      --shadow: 0 14px 36px rgba(0, 0, 0, 0.25);
     }
 
     * {
@@ -36,15 +37,39 @@ HTML = """<!doctype html>
       margin: 0;
       min-height: 100vh;
       background:
-        linear-gradient(180deg, rgba(197, 31, 70, 0.10), rgba(23, 138, 74, 0.08) 42%, transparent 100%),
+        linear-gradient(180deg, rgba(197, 31, 70, 0.06), rgba(23, 138, 74, 0.04) 42%, transparent 100%),
         var(--bg);
       color: var(--ink);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
     }
 
-    button {
+    button,
+    input,
+    select,
+    textarea {
       font: inherit;
+    }
+
+    input,
+    select,
+    textarea {
+      background: var(--panel-soft);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--muted);
+    }
+
+    a { color: var(--focus); }
+
+    :focus-visible {
+      outline: 2px solid var(--focus);
+      outline-offset: 3px;
     }
 
     .shell {
@@ -61,10 +86,10 @@ HTML = """<!doctype html>
       align-items: center;
       min-height: 168px;
       padding: 24px;
-      border: 1px solid rgba(123, 17, 48, 0.18);
+      border: 1px solid var(--line);
       border-radius: 8px;
       background:
-        linear-gradient(135deg, rgba(255, 253, 248, 0.95), rgba(255, 247, 223, 0.92)),
+        linear-gradient(135deg, rgba(26, 37, 54, 0.96), rgba(17, 32, 35, 0.96)),
         var(--panel);
       box-shadow: var(--shadow);
       overflow: hidden;
@@ -148,7 +173,7 @@ HTML = """<!doctype html>
     .hero-copy {
       width: min(700px, 100%);
       margin: 0;
-      color: #3d473e;
+      color: var(--muted);
       font-size: 15px;
       line-height: 1.55;
     }
@@ -171,33 +196,49 @@ HTML = """<!doctype html>
       color: var(--ink);
       font-size: 13px;
       font-weight: 750;
-      white-space: nowrap;
+      overflow-wrap: anywhere;
+    }
+
+    .pill.ok {
+      background: rgba(98, 220, 156, 0.08);
+      color: var(--ok);
+    }
+
+    .pill.warn {
+      background: rgba(240, 187, 98, 0.08);
+      color: var(--warn);
+    }
+
+    .pill.bad {
+      background: rgba(255, 130, 151, 0.08);
+      color: var(--bad);
     }
 
     .dot {
       width: 10px;
       height: 10px;
+      flex: 0 0 auto;
       border-radius: 999px;
       background: var(--muted);
-      box-shadow: 0 0 0 3px rgba(101, 113, 102, 0.12);
+      box-shadow: 0 0 0 3px rgba(168, 182, 200, 0.12);
     }
 
     .ok .dot,
     .dot.ok {
       background: var(--ok);
-      box-shadow: 0 0 0 3px rgba(22, 136, 79, 0.15);
+      box-shadow: 0 0 0 3px rgba(98, 220, 156, 0.12);
     }
 
     .bad .dot,
     .dot.bad {
       background: var(--bad);
-      box-shadow: 0 0 0 3px rgba(191, 38, 65, 0.15);
+      box-shadow: 0 0 0 3px rgba(255, 130, 151, 0.12);
     }
 
     .warn .dot,
     .dot.warn {
       background: var(--warn);
-      box-shadow: 0 0 0 3px rgba(179, 107, 0, 0.16);
+      box-shadow: 0 0 0 3px rgba(240, 187, 98, 0.12);
     }
 
     .toolbar {
@@ -222,6 +263,9 @@ HTML = """<!doctype html>
     }
 
     .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       min-height: 36px;
       padding: 8px 12px;
       border: 1px solid var(--line);
@@ -231,12 +275,13 @@ HTML = """<!doctype html>
       cursor: pointer;
       font-size: 13px;
       font-weight: 760;
+      text-decoration: none;
       transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
     }
 
     .btn:hover {
       transform: translateY(-1px);
-      border-color: rgba(197, 31, 70, 0.42);
+      border-color: var(--focus);
     }
 
     .btn:disabled {
@@ -268,8 +313,8 @@ HTML = """<!doctype html>
     .section {
       border: 1px solid var(--line);
       border-radius: 8px;
-      background: rgba(255, 253, 248, 0.96);
-      box-shadow: 0 6px 18px rgba(61, 35, 30, 0.06);
+      background: var(--panel);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
     }
 
     .metric {
@@ -353,7 +398,7 @@ HTML = """<!doctype html>
       border: 1px solid var(--line);
       border-radius: 8px;
       background:
-        linear-gradient(180deg, rgba(240, 245, 232, 0.95), rgba(255, 253, 248, 0.96));
+        linear-gradient(180deg, var(--panel-soft), var(--panel));
     }
 
     .row-title {
@@ -412,7 +457,7 @@ HTML = """<!doctype html>
       align-items: baseline;
       min-height: 30px;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(217, 223, 207, 0.72);
+      border-bottom: 1px solid var(--line);
     }
 
     .kv dt {
@@ -444,8 +489,8 @@ HTML = """<!doctype html>
       gap: 12px;
       padding: 10px 12px;
       border-bottom: 1px solid var(--terminal-line);
-      background: #182019;
-      color: #edf7e7;
+      background: var(--panel-soft);
+      color: var(--ink);
     }
 
     .console-title {
@@ -464,19 +509,19 @@ HTML = """<!doctype html>
     .tab {
       min-height: 32px;
       padding: 7px 10px;
-      border: 1px solid #344539;
+      border: 1px solid var(--terminal-line);
       border-radius: 8px;
-      background: #101511;
-      color: #bedabe;
+      background: var(--terminal);
+      color: var(--terminal-text);
       cursor: pointer;
       font-size: 12px;
       font-weight: 760;
     }
 
     .tab.active {
-      border-color: #7dde96;
-      color: #f1fff1;
-      background: #1c2d20;
+      border-color: var(--ok);
+      color: var(--ink);
+      background: #19372a;
     }
 
     .console {
@@ -523,6 +568,37 @@ HTML = """<!doctype html>
       transform: translateY(0);
     }
 
+    .network-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(160px, 1.25fr);
+      gap: 12px;
+      margin: 0;
+    }
+
+    .network-metrics > div {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-soft);
+      min-width: 0;
+    }
+
+    .network-metrics dt {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .network-metrics dd {
+      margin: 8px 0 0;
+      font-size: 24px;
+      font-weight: 780;
+      overflow-wrap: anywhere;
+    }
+
+    .network-metrics .network-time { font-size: 14px; line-height: 1.5; }
+    .network-diagnosis { padding-left: 20px; margin-bottom: 0; color: var(--muted); }
+    .network-diagnosis li { margin-top: 6px; font-size: 13px; overflow-wrap: anywhere; }
+
     @media (max-width: 980px) {
       .hero,
       .two-col {
@@ -536,6 +612,8 @@ HTML = """<!doctype html>
       .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .network-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
       .toolbar,
       .section-head {
@@ -611,6 +689,24 @@ HTML = """<!doctype html>
       <div class="metric"><div class="label">Eventos enviados</div><div class="value" id="messages-sent">--</div><div class="hint" id="messages-detail">--</div></div>
     </section>
 
+    <section class="section" aria-labelledby="network-title">
+      <div class="section-head">
+        <h2 id="network-title">PiSentinel · Rede</h2>
+        <div class="button-row">
+          <span class="pill" id="network-status"><span class="dot"></span><span>Consultando rede</span></span>
+          <a class="btn" id="network-link" href="/" target="_blank" rel="noopener noreferrer">Analisador de rede ↗</a>
+        </div>
+      </div>
+      <dl class="network-metrics" aria-label="Resumo da rede">
+        <div><dt>Respondendo</dt><dd id="network-online">--</dd></div>
+        <div><dt>Sem resposta</dt><dd id="network-offline">--</dd></div>
+        <div><dt>Incidentes abertos</dt><dd id="network-incidents">--</dd></div>
+        <div><dt>Última atualização</dt><dd class="network-time" id="network-updated">--</dd></div>
+      </dl>
+      <p class="hint" id="network-detail" role="status">Consultando o PiSentinel...</p>
+      <ul class="network-diagnosis" id="network-diagnosis" hidden></ul>
+    </section>
+
     <section class="two-col">
       <section class="section">
         <div class="section-head">
@@ -681,6 +777,14 @@ HTML = """<!doctype html>
     const $ = (id) => document.getElementById(id);
     let selectedLogService = "instagram-stl-auto-dm";
     let lastStatus = null;
+    let networkRefreshPending = false;
+    const networkUrl = new URL(window.location.href);
+    networkUrl.protocol = "http:";
+    networkUrl.port = "8090";
+    networkUrl.pathname = "/";
+    networkUrl.search = "";
+    networkUrl.hash = "";
+    $("network-link").href = networkUrl.href;
 
     function showToast(message) {
       const toast = $("toast");
@@ -708,6 +812,52 @@ HTML = """<!doctype html>
     function numberText(value) {
       const number = Number(value);
       return Number.isFinite(number) ? number.toLocaleString("pt-BR") : "--";
+    }
+
+    function renderNetwork(data) {
+      const diagnosis = $("network-diagnosis");
+      diagnosis.replaceChildren();
+      diagnosis.hidden = true;
+      if (!data.available || !data.summary) {
+        setStatusPill("network-status", false, "Indisponível", true);
+        for (const id of ["network-online", "network-offline", "network-incidents", "network-updated"]) {
+          $(id).textContent = "--";
+        }
+        $("network-detail").textContent = data.detail || "Não foi possível consultar o PiSentinel. O restante do painel continua disponível.";
+        return;
+      }
+      const { network, collector, counts } = data.summary;
+      const stale = collector.stale;
+      setStatusPill("network-status", !stale, stale ? "Leitura desatualizada" : "Coletor atualizado", stale);
+      $("network-online").textContent = numberText(counts.online);
+      $("network-offline").textContent = numberText(counts.offline);
+      $("network-incidents").textContent = numberText(counts.open_incidents);
+      const updated = collector.last_seen ? new Date(collector.last_seen) : null;
+      $("network-updated").textContent = updated && Number.isFinite(updated.getTime()) ? updated.toLocaleString("pt-BR") : "Sem leitura";
+      const description = [network.label, network.cidr, `${numberText(counts.devices)} dispositivos`, `${numberText(counts.unknown)} sem estado conhecido`].filter(Boolean).join(" · ");
+      $("network-detail").textContent = stale ? `${description}. Dados da última coleta; o estado atual não está confirmado.` : description;
+      const items = Array.isArray(data.summary.diagnosis) ? data.summary.diagnosis.slice(0, 2) : [];
+      for (const item of items) {
+        if (!item || (!item.title && !item.detail)) continue;
+        const row = document.createElement("li");
+        row.textContent = [item.title, item.detail].filter(Boolean).join(": ");
+        diagnosis.appendChild(row);
+      }
+      diagnosis.hidden = !diagnosis.childElementCount;
+    }
+
+    async function refreshNetwork() {
+      if (networkRefreshPending) return;
+      networkRefreshPending = true;
+      try {
+        const response = await fetch("/api/network", { cache: "no-store", signal: AbortSignal.timeout(5000) });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        renderNetwork(await response.json());
+      } catch {
+        renderNetwork({ available: false });
+      } finally {
+        networkRefreshPending = false;
+      }
     }
 
     function serviceMarkup(service) {
@@ -917,7 +1067,10 @@ HTML = """<!doctype html>
       }
     });
 
-    $("refresh-btn").addEventListener("click", refresh);
+    $("refresh-btn").addEventListener("click", () => {
+      refresh();
+      refreshNetwork();
+    });
     $("refresh-logs").addEventListener("click", () => loadLogs(selectedLogService));
     $("refresh-inventory").addEventListener("click", refreshInventory);
     $("test-notification").addEventListener("click", async () => {
@@ -940,11 +1093,13 @@ HTML = """<!doctype html>
       }
     });
 
+    refreshNetwork();
     refresh().then(() => {
       refreshInventory();
       loadLogs(selectedLogService);
     });
     setInterval(refresh, 5000);
+    setInterval(refreshNetwork, 15000);
     setInterval(() => loadLogs(selectedLogService), 10000);
   </script>
 </body>
